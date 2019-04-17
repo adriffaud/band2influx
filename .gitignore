@@ -1,0 +1,8 @@
+# Gadgetbridge DB exports
+Gadgetbridge*
+
+# App binary
+miband
+
+# Docker dirs
+influx-data/
