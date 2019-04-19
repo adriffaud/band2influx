@@ -12,6 +12,7 @@ import (
 
 	b2i "driffaud.fr/adrien/band2influx"
 	"github.com/gorilla/mux"
+	client "github.com/influxdata/influxdb1-client/v2"
 )
 
 var port int
@@ -22,6 +23,37 @@ var username string
 var password string
 
 func sendDatapoints(datapoints []b2i.Datapoint) error {
+	c, err := client.NewHTTPClient(client.HTTPConfig{Addr: influxEndpoint})
+	if err != nil {
+		return err
+	}
+	defer c.Close()
+
+	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{Database: database, Precision: "s"})
+
+	for _, dp := range datapoints {
+		fields := map[string]interface{}{
+			"raw-intensity": dp.RawIntensity,
+			"raw-kind":      dp.RawKind,
+			"steps":         dp.Steps,
+		}
+
+		// Ignore erroneous heart rate measurements
+		if dp.HeartRate < 250 && dp.HeartRate > 0 {
+			fields["heart-rate"] = dp.HeartRate
+		}
+
+		pt, err := client.NewPoint("activity", nil, fields, time.Unix(dp.Timestamp, 0))
+		if err != nil {
+			return err
+		}
+		bp.AddPoint(pt)
+	}
+
+	err = c.Write(bp)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -33,11 +65,18 @@ func datapointHandler(w http.ResponseWriter, req *http.Request) {
 		fmt.Println("Error decoding json body", err)
 	}
 
-	fmt.Printf("%d datapoints received\n", len(datapoints))
+	var jsonBody []byte
+	err = sendDatapoints(datapoints)
+	if err != nil {
+		fmt.Println(err)
+		jsonBody, _ = json.Marshal(err)
+		w.WriteHeader(http.StatusInternalServerError)
+	} else {
+		jsonBody, _ = json.Marshal(datapoints)
+		w.WriteHeader(http.StatusOK)
+	}
 
-	jsonBody, _ := json.Marshal(datapoints)
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 	w.Write(jsonBody)
 }
 
@@ -84,37 +123,4 @@ func main() {
 	srv.Shutdown(ctx)
 	fmt.Println("shutting down")
 	os.Exit(0)
-
-	// c, err := client.NewHTTPClient(client.HTTPConfig{Addr: "http://localhost:8086"})
-	// if err != nil {
-	// 	fmt.Println("Error creating InfluxDB Client: ", err.Error())
-	// }
-	// defer c.Close()
-
-	// bp, _ := client.NewBatchPoints(client.BatchPointsConfig{Database: database, Precision: "s"})
-
-	// log.Println("Preparing data for addition into InfluxDB")
-	// for _, dp := range dpts {
-	// 	fields := map[string]interface{}{
-	// 		"raw-intensity": dp.RawIntensity,
-	// 		"raw-kind":      dp.RawKind,
-	// 		"steps":         dp.Steps,
-	// 	}
-
-	// 	if dp.HeartRate < 250 && dp.HeartRate > 0 {
-	// 		fields["heart-rate"] = dp.HeartRate
-	// 	}
-
-	// 	pt, err := client.NewPoint("activity", nil, fields, time.Unix(dp.Timestamp, 0))
-	// 	if err != nil {
-	// 		log.Println("Error:", err.Error())
-	// 	}
-	// 	bp.AddPoint(pt)
-	// }
-
-	// log.Println("Writing into InfluxDB")
-	// err = c.Write(bp)
-	// if err != nil {
-	// 	log.Fatal(err.Error())
-	// }
 }
