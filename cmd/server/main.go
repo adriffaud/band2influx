@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"time"
 
 	b2i "driffaud.fr/adrien/band2influx"
@@ -22,6 +24,29 @@ var database string
 var username string
 var password string
 
+func getLastTimestamp() int64 {
+	content, err := ioutil.ReadFile("lastTs")
+	if err != nil {
+		fmt.Println("Couldn't read last timestamp")
+		return 0
+	}
+
+	ts, err := strconv.ParseInt(string(content), 10, 64)
+	if err != nil {
+		fmt.Println("Couldn't read last timestamp")
+		return 0
+	}
+
+	return ts
+}
+
+func setLastTimestamp(ts int64) {
+	err := ioutil.WriteFile("lastTs", []byte(strconv.FormatInt(ts, 10)), 0644)
+	if err != nil {
+		fmt.Println("Couldn't store last timestamp")
+	}
+}
+
 func sendDatapoints(datapoints []b2i.Datapoint) error {
 	c, err := client.NewHTTPClient(client.HTTPConfig{Addr: influxEndpoint})
 	if err != nil {
@@ -30,8 +55,14 @@ func sendDatapoints(datapoints []b2i.Datapoint) error {
 	defer c.Close()
 
 	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{Database: database, Precision: "s"})
+	lastTsSent := getLastTimestamp()
 
 	for _, dp := range datapoints {
+		// Do not resend previously sent data
+		if dp.Timestamp <= lastTsSent {
+			continue
+		}
+
 		fields := map[string]interface{}{
 			"raw-intensity": dp.RawIntensity,
 			"raw-kind":      dp.RawKind,
@@ -55,6 +86,7 @@ func sendDatapoints(datapoints []b2i.Datapoint) error {
 		return err
 	}
 
+	setLastTimestamp(datapoints[len(datapoints)-1].Timestamp)
 	return nil
 }
 

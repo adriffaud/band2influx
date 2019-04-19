@@ -29,7 +29,7 @@ func getDataPoints(dbFile string) ([]b2i.Datapoint, error) {
 	sqlStmt := `
 		SELECT TIMESTAMP, RAW_INTENSITY, STEPS, RAW_KIND, HEART_RATE
 		FROM MI_BAND_ACTIVITY_SAMPLE
-		ORDER BY TIMESTAMP DESC;
+		ORDER BY TIMESTAMP ASC;
 	`
 	err = db.Select(&datapoints, sqlStmt)
 	if err != nil {
