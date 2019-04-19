@@ -2,7 +2,9 @@
 Gadgetbridge*
 
 # App binary
-band2influx
+importer
+server
+!/cmd/**
 
 # Docker dirs
 influx-data/
