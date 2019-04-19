@@ -1,9 +1,10 @@
 # Gadgetbridge DB exports
 Gadgetbridge*
 
-# App binary
+# App binaries
 importer
 server
+# Do not ignore importer and server folders inside cmd
 !/cmd/**
 
 # Docker dirs
