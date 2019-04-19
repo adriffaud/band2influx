@@ -18,6 +18,13 @@ var port int
 
 var influxEndpoint string
 var database string
+var username string
+var password string
+
+func sendDatapoints(datapoints []b2i.Datapoint) error {
+
+	return nil
+}
 
 func datapointHandler(w http.ResponseWriter, req *http.Request) {
 	var datapoints []b2i.Datapoint
@@ -42,10 +49,12 @@ func main() {
 	flag.IntVar(&port, "p", 8080, "the server port")
 	flag.StringVar(&influxEndpoint, "influxEndpoint", "http://localhost:8086", "the influxdb host")
 	flag.StringVar(&database, "db", "", "the influx database")
+	flag.StringVar(&username, "user", "", "the basic auth user")
+	flag.StringVar(&password, "pass", "", "the basic auth pass")
 	flag.Parse()
 
 	r := mux.NewRouter()
-	r.HandleFunc("/api/datapoints", b2i.BasicAuth(datapointHandler, "adrien", "adrien", "toto")).Methods("POST")
+	r.HandleFunc("/api/datapoints", b2i.BasicAuth(datapointHandler, username, password)).Methods("POST")
 	http.Handle("/", r)
 
 	// Server configuration
