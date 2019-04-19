@@ -1,6 +1,14 @@
 # MiBand
 
-Basic utilities to manipulate Gadgetbrige data and import into InfluxBD.
+Basic utilities to manipulate [Gadgetbrige](https://codeberg.org/Freeyourgadget/Gadgetbridge) data and import into InfluxDB.
+
+## Build
+
+### Raspberry Pi Server
+
+```shell
+GOOS=linux GOARCH=arm GOARM=7 go build ./cmd/server
+```
 
 ## Usage
 
