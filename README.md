@@ -13,5 +13,5 @@ server -p <port> -db <influx_db_name> -influxEndpoint <influx_host_port> -user <
 ### Importer
 
 ```shell
-importer -u <auth_user> -p <auth_pass> -h <server_endpoint>
+importer -user <auth_user> -pass <auth_pass> -host <server_endpoint>
 ```

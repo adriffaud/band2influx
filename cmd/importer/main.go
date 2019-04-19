@@ -43,7 +43,7 @@ func sendDataPoints(dpts []b2i.Datapoint) error {
 	jsonBody, _ := json.Marshal(dpts)
 
 	client := &http.Client{}
-	req, err := http.NewRequest("POST", "http://localhost:8080/api/datapoints", bytes.NewBuffer(jsonBody))
+	req, err := http.NewRequest("POST", hostname+"/api/datapoints", bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return err
 	}
@@ -68,9 +68,9 @@ func main() {
 	fmt.Println("=====================================")
 	fmt.Println()
 
-	flag.StringVar(&hostname, "h", "http://localhost:8080", "Endpoint of the server")
-	flag.StringVar(&username, "u", "", "Username used for authentication")
-	flag.StringVar(&password, "p", "", "Password used for authentication")
+	flag.StringVar(&hostname, "host", "http://localhost:8080", "Endpoint of the server")
+	flag.StringVar(&username, "user", "", "Username used for authentication")
+	flag.StringVar(&password, "pass", "", "Password used for authentication")
 	flag.Parse()
 
 	if len(os.Args) < 2 {
