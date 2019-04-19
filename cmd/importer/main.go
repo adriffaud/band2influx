@@ -52,7 +52,7 @@ func sendDataPoints(dpts []b2i.Datapoint) error {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Printf("Error : %s", err)
+		return err
 	}
 	defer resp.Body.Close()
 
@@ -86,10 +86,14 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Printf("%d datapoints\n", len(dpts))
+	fmt.Printf("%d datapoints to send\n", len(dpts))
 
 	err = sendDataPoints(dpts)
 	if err != nil {
-		fmt.Println("Could not write datapoints to InfluxDB:", err)
+		fmt.Printf("Could not write datapoints to InfluxDB:\n\t%s\n", err)
+		os.Exit(1)
 	}
+
+	fmt.Println("Done")
+	os.Exit(0)
 }
